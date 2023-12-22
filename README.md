@@ -1,15 +1,14 @@
 
 # MyCpSkAPI
 
-MyCpSkAPI (name pending haha) is a Python-based application that interacts with the cp.sk API to fetch and display train route information. It provides detailed information about train routes including departure and arrival times, delays, train types, and distances.
+MyCpSkAPI (name pending haha) is a Python-based application that interacts with the cp.sk website to fetch and display train route information. It provides detailed information about train routes including departure and arrival times, delays, train types, and distances.
 
 ## Features
 
 - Fetches train route information from cp.sk.
-- Provides detailed information about each route including departure and arrival times, delays, train types, and distances.
+- Detailed information about each route including departure and arrival times, delays, train types, and distances.
 - Supports command-line arguments for easy usage.
 - Includes autocorrect and search for station names.
-- Debug and profiling modes for detailed logging and performance analysis.
 
 ## Requirements
 
