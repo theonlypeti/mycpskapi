@@ -1,0 +1,6 @@
+coloredlogs
+snakeviz
+aiohttp
+beautifulsoup4
+tabulate
+requests
