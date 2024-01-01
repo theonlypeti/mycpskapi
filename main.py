@@ -177,6 +177,8 @@ def main():
     cesta = make_request(link, inputted_datetime)
     # print(cesta)
     cesta.pprint()
+    if args.logfile:
+        logger.message(f"{cesta}")
     # print(cesta.warnings)
 
 

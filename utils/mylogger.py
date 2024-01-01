@@ -22,9 +22,9 @@ def main(args=None):
             pass
         fl = logging.FileHandler(filename)
         fl.setFormatter(formatter)
-        # fl.setLevel(5)
-        # logging.addLevelName(5, "Message")
-        # fl.addFilter(lambda rec: rec.levelno < 10)
+        fl.setLevel(5)
+        logging.addLevelName(5, "Message")
+        fl.addFilter(lambda rec: rec.levelno < 10)
         baselogger.addHandler(fl)
 
     baselogger.setLevel(logging.DEBUG) #base is debug, so the file handler could catch debug msgs too
