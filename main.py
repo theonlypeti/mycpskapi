@@ -1,12 +1,12 @@
 import json
-import time as time_module
 import os
 import argparse
 from datetime import datetime, timedelta
 import aiohttp
 from bs4 import BeautifulSoup as html
 import requests
-
+import time as time_module
+from classes.RouteSpecs import RouteSpecs
 start = time_module.perf_counter()
 
 # root = os.getcwd()
@@ -15,42 +15,34 @@ import utils.mylogger as mylogger
 from classes.Station import Station
 from classes.Route import Route
 from classes.Itinerary import Itinerary
+from utils.levenstein import recommend_words
 # os.chdir(root)
 
-
-VERSION = "0.6a"
-parser = argparse.ArgumentParser(prog=f"MyCpSkAPI V{VERSION}", description='My API for cp.sk', epilog="Written by theonlypeti.")  # TODO separate this and the functions into a separate file so i can import them without running this
-
-# parser.add_argument("--minimal", action="store_true", help="Quiet mode.")
-parser.add_argument("--depart", action="store", help="City from", required=True)
-parser.add_argument("--to", action="store", help="City to", required=True)
-parser.add_argument("--date", action="store", help="Date (dd.mm.yyyy) of departure")
-parser.add_argument("--time", action="store", help="Time (hh:mm) of departure")
-parser.add_argument("--force", action="store_true", help="Forces the program to use the exact station names provided by the user, even if they contain potential typos or mismatches.")
-parser.add_argument("--autocorrect", action="store_true", help="Enables the program to automatically correct the station names provided by the user by guessing the most likely correct names.")
-parser.add_argument("--debug", action="store_true", help="Enable debug mode.")
-parser.add_argument("--profiling", action="store_true", help="Measures the runtime and outputs it to profile.prof.")
-parser.add_argument("--logfile", action="store_true", help="Logs to a file.")
-args = parser.parse_args()
-
-mylogger.main(args)  # initializing the logger
-from utils.mylogger import baselogger as logger
-from utils.levenstein import recommend_words
-
-with open(root + r"/data/stations.json", "r", encoding="utf-8") as f:
-    stations = json.load(f).keys()
-    logger.debug(f"{len(stations)=}")
-
-# logger.warning(recommend_word("Levie", stations))  #assert Levice
-# logger.warning(recommend_word("Podhajska", stations)) #assert Podhájska
-# logger.warning(recommend_word("Pozb", stations)) #assert Pozba
-# logger.warning(recommend_word("Trencsen", stations)) #assert Trenčín
+VERSION = "0.9b"
 
 
-def make_request(link: str, inputted_datetime: datetime):  # dont judge pls
+def cmd_args():
+    parser = argparse.ArgumentParser(prog=f"MyCpSkAPI V{VERSION}", description='My API for cp.sk',
+                                     epilog="Written by theonlypeti.")  # TODO separate this and the functions into a separate file so i can import them without running this
+    # parser.add_argument("--minimal", action="store_true", help="Quiet mode.")
+    parser.add_argument("--depart", action="store", help="City from", required=True)
+    parser.add_argument("--to", action="store", help="City to", required=True)
+    parser.add_argument("--date", action="store", help="Date (dd.mm.yyyy) of departure")
+    parser.add_argument("--time", action="store", help="Time (hh:mm) of departure")
+    parser.add_argument("--force", action="store_true",
+                        help="Forces the program to use the exact station names provided by the user, even if they contain potential typos or mismatches.")
+    parser.add_argument("--autocorrect", action="store_true",
+                        help="Enables the program to automatically correct the station names provided by the user by guessing the most likely correct names.")
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode.")
+    parser.add_argument("--profiling", action="store_true", help="Measures the runtime and outputs it to profile.prof.")
+    parser.add_argument("--logfile", action="store_true", help="Logs to a file.")
+    args = parser.parse_args()
+    return args
+
+
+def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont judge pls
     # async with aiohttp.ClientSession() as session: #TODO make it async again?
     #     async with session.get(link) as req:
-    logger.debug(link)
     req = requests.get(link)
     stranka = req.text
     soup = html(stranka, 'html.parser')
@@ -60,24 +52,25 @@ def make_request(link: str, inputted_datetime: datetime):  # dont judge pls
         time = timeelem.text.removesuffix(depart_time)
         depart_time = datetime.strptime(f"{datetime.now().year}.{depart_time.split(' ')[0]} {time}", "%Y.%d.%m. %H:%M")
         if depart_time < datetime.now() < inputted_datetime:
-            depart_time = depart_time.replace(year=datetime.now().year+1)
+            depart_time = depart_time.replace(year=datetime.now().year+1)  # if the date (month + day) is in the past, it's probably next year
         currdate = depart_time
 
         spoj = soup.find("div", attrs={"class": "connection-details"})
         allcities = spoj.find_all("a", attrs={"title": "Zobraziť detail spoja"})
         traintype = spoj.find("img").get("alt")
         logger.debug(allcities)
-    except Exception as e:
+    except AttributeError as e:
         logger.error(e)
-        return None
+        logger.warning(link)
+        raise e.__class__("No data found. Double check the provided station names and try again.")
     try:
         links = []
         for vlak in allcities:
             links.append(vlak.get("href"))
         # links = a.get("href") #ez szokott errorozni mert nonetype az a
     except AttributeError as e:
-        logger.error(e)
-        return None
+        logger.error(e)  # raise invalid data
+        raise e.__class__("No data found. Double check the provided station names and try again.")
 
     routes = []
     for link in links:
@@ -99,7 +92,10 @@ def make_request(link: str, inputted_datetime: datetime):  # dont judge pls
             delay = 0
 
         soup = html(stranka, 'html.parser')
-        allcities = soup.find_all("li", attrs={"class": "item"})
+        specs = soup.find("p", attrs={"class": "specs"})
+        # logger.warning(specs.text)
+        citylist = soup.find("ul", attrs={"class": "line-itinerary"})
+        allcities = citylist.find_all("li", attrs={"class": "item"})
         othercities = soup.find_all("li", attrs={"class": "item inactive"})
         routecities = set(allcities).difference(set(othercities))
         routecities = [i for i in allcities if i in routecities]
@@ -107,31 +103,51 @@ def make_request(link: str, inputted_datetime: datetime):  # dont judge pls
         try:
             distance = int(routecities[-1].find("span", attrs={"class": "distance"}).text.strip("km ")) - int(routecities[0].find("span", attrs={"class": "distance"}).text.strip("km "))
         except ValueError:
-            distance = 0
+            distance = None
 
         cities = []
-        for child in routecities:
+        for child in routecities[1:]:
             city = Station.from_soup(child, currdate)
             cities.append(city)
-            if city.arrival and city.arrival < currdate: #rollover to the next day
+            if city.arrival and city.arrival < currdate and city.arrival.hour in range(0, 7) and currdate.hour in range(18, 24): #rollover to the next day
+                logger.debug(f"rollover {city.arrival=}, {currdate=}") #i think this is a reasonable assumption that there are no train rides which do not stop for over 12 hours
                 city.arrival += timedelta(days=1)
                 city.departure += timedelta(days=1)
             if city.departure:
+                logger.debug(f"{city.departure=}")
                 currdate = city.departure
 
-        rt = Route(cities, delay, traintype or None, distance)
+        warn = soup.find("li", attrs={"class": "message-red"})
+        if warn:
+            warnings = [i.text.strip() for i in warn.find_all("li")] if warn else None
+        else:
+            warnings = None
+
+        remarkslist = soup.find("li", attrs={"class": "message-grey"})
+        if remarkslist:
+            remarks = [i.text.strip() for i in remarkslist.find_all("li")] if remarkslist else None
+        else:
+            remarks = None
+
+        specs = RouteSpecs([elem.text for elem in specs.find_all("span")])
+        rt = Route(cities, delay, traintype or None, distance, warnings, remarks, specs)
         routes.append(rt)
 
     return Itinerary(routes)
 
 
 def makeLink(fromcity: str, tocity: str, date: str, time: str) -> str:
+    if isinstance(fromcity, list) or isinstance(tocity, list):
+        raise ValueError(f"origin and destination stations must be strings, not lists. ({fromcity=}, {tocity=})")
     fromcity = fromcity.replace(" ", "%20")
     tocity = tocity.replace(" ", "%20")  # this is not strictly needed as it seems to work fine but let's keep it here
-    return f"https://cp.hnonline.sk/vlakbus/spojenie/vysledky/?"+(f"date={date}&" if date else "") + (f"time={time}&" if time else "") +f"f={fromcity}&fc=100003&t={tocity}&tc=100003&af=true&&trt=150,151,152,153" #direct=true
+    return f"https://cp.hnonline.sk/vlakbus/spojenie/vysledky/?"+(f"date={date}&" if date else "") + (f"time={time}&" if time else "") + f"f={fromcity}&fc=100003&t={tocity}&tc=100003&af=true&&trt=150,151,152,153" #direct=true
 
 
 def main():
+    # logger.info(autocomplete_stations("Wien"))
+    # logger.info(find_stations("Wien"))
+    logger.debug(f"{len(stations)} stations loaded.")
     inputted_date = datetime.strptime(args.date, "%d.%m.%Y") if args.date else datetime.now()
     inputted_time = datetime.strptime(args.time, "%H:%M") if args.time else datetime.now()
     inputted_datetime = datetime.combine(inputted_date, inputted_time.time())
@@ -157,31 +173,42 @@ def main():
             else:
                 args.to = recto[0]
     link = makeLink(args.depart, args.to, args.date, args.time)
+    logger.debug(link)
     cesta = make_request(link, inputted_datetime)
-    print(cesta)
+    # print(cesta)
     cesta.pprint()
+    # print(cesta.warnings)
 
 
 def get_itinerary(departure: str, destinaton: str, depart_time: datetime = None):
     """Returns an Itinerary object with the given parameters."""
     if not depart_time:
-        depart_time = depart_time.now()
+        depart_time = datetime.now()
     link = makeLink(departure, destinaton, depart_time.strftime("%d.%m.%Y"), depart_time.strftime("%H:%M"))
     return make_request(link, depart_time)
 
 
 def find_stations(name: str):
     """Returns a list of stations that closely match the name."""
-    return recommend_words(name, stations)  # TODO merge these two functions
+    return recommend_words(name, stations)
+    # TODO merge these two functions
+    # theres an issue like Wien does not find haufbanhof but some other city
+    # but that's just the nature of levenstein
 
 
 def autocomplete_stations(name: str):
     """Returns a list of stations whose name begin with name."""
-    return [st for st in stations if len(name) > 2 and st.startswith(name)]
+    assert len(name) > 2, "Name must be at least 3 characters long."
+    return [st for st in stations if len(name) > 2 and (st.startswith(name.title()) or st.startswith(name.capitalize()))]
 
+
+with open(root + r"/data/stations.json", "r", encoding="utf-8") as f:
+    stations = json.load(f).keys()
 
 if __name__ == "__main__":
-    # args = parser.parse_args()
+    args = cmd_args()
+    mylogger.main(args)  # initializing the logger
+    from utils.mylogger import baselogger as logger
     if args.profiling:
         import cProfile
         import pstats
@@ -195,6 +222,10 @@ if __name__ == "__main__":
         os.system("snakeviz profile.prof")
     else:
         main()
+else:
+    mylogger.main()  # initializing the logger, but without the command line arguments, making it a default INFO logger
+    from utils.mylogger import baselogger as logger
+    logger.debug(f"{len(stations)} stations loaded.")
 
 
 """Usage:
@@ -202,4 +233,3 @@ python main.py --depart "Bratislava" --to "Podhajska" --date 13.01.2024 --time 1
         or
 .\.venv\Scripts\python.exe main.py --depart "Bratislava" --to "Podhajska" --date 13.01.2024 --time 12:00 --autocorrect
 """
-

@@ -3,6 +3,12 @@ from bs4.element import Tag
 
 
 class Station(object):
+    """
+    A station is a stop on a route with an arrival and departure time.
+    :ivar name: The name of the station.
+    :ivar arrival: The arrival time at the station.
+    :ivar departure: The departure time from the station.
+    """
     def __init__(self, name: str, arrival: datetime, departure: datetime):
         self.name: str = name
         self.arrival: datetime = arrival
@@ -13,6 +19,14 @@ class Station(object):
 
     def __str__(self):
         return f"Station:\n{self.name=}\n{self.arrival=}\n{self.departure=}"
+
+    def __eq__(self, other):
+        if isinstance(other, Station):
+            return (self.name == other.name and
+                    self.arrival == other.arrival and
+                    self.departure == other.departure)
+        else:
+            raise TypeError(f"Cannot compare Station with {other.__class__}")
 
     @classmethod
     def from_soup(cls, elem: Tag, date: datetime):

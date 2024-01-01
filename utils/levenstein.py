@@ -1,4 +1,7 @@
 def levenshtein_distance(s1, s2):
+    s1 = s1.lower()
+    s2 = s2.lower()
+
     if len(s1) < len(s2):
         return levenshtein_distance(s2, s1)
 
@@ -31,11 +34,11 @@ def levenshtein_distance(s1, s2):
 #     return closest_word
 
 
-def recommend_words(word, dict_keys):
+def recommend_words(word, seq):
     closest_words = []
     min_distance = float('inf')
 
-    for key in dict_keys:
+    for key in seq:
         distance = levenshtein_distance(word, key)
         if distance < min_distance:
             min_distance = distance
