@@ -106,7 +106,7 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
             distance = None
 
         cities = []
-        for child in routecities[1:]:
+        for child in routecities:
             city = Station.from_soup(child, currdate)
             cities.append(city)
             if city.arrival and city.arrival < currdate and city.arrival.hour in range(0, 7) and currdate.hour in range(18, 24): #rollover to the next day

@@ -24,7 +24,7 @@ class TestMain(unittest.TestCase):
         stations = find_stations(name)
         self.assertIn("Podhájska", stations)
 
-        name = "wien " #TODO now this does not get found without a space because theres a city twith a shorter levenstein distance
+        name = "wien " #TODO now this does not get found without a space because theres a city with a shorter levenstein distance
         stations = find_stations(name)
         # print(stations)
         self.assertIn("Wien Hbf", stations)
@@ -51,6 +51,8 @@ class TestDunderMethods(unittest.TestCase):
     def test_itinerary_length_returns_correct_value(self):
         self.assertEqual(len(itin_pozb_ba), 3)
         self.assertEqual(len(itin_pozb_ba.routes), 3)
+        self.assertEqual(len(itin_podh_ba), 3)
+        self.assertEqual(len(itin_ba_wien), 1)
 
     def test_itinerary_eq_returns_true_for_same_routes(self):
         itinerary1 = itin_pozb_ba
@@ -59,7 +61,7 @@ class TestDunderMethods(unittest.TestCase):
 
     def test_itinerary_eq_returns_false_for_different_routes(self):
         itinerary1 = itin_pozb_ba
-        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime.now() + timedelta(hours=24))
+        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime(2024, 1, 2, 17, 0))
         self.assertFalse(itinerary1 == itinerary2)
 
 
