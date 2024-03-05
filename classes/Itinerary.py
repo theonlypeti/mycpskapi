@@ -2,7 +2,7 @@ import json
 from datetime import timedelta, datetime
 from itertools import zip_longest
 import tabulate
-from classes import Route
+from classes.Route import Route
 from classes.Station import Station
 
 
@@ -18,16 +18,16 @@ class Itinerary(object):
 
     :ivar routes: A list of Route objects that make up the itinerary.
     :ivar departure: The departure time from the first station of the first route.
-    :ivar arrival: The arrival time at the last station of the last route.
-    :ivar length: The total time the itinerary takes.
-    :ivar distance: The total distance of the itinerary. Measured in kilometers.
-    :ivar warnings: A list of warnings of the current itinerary.
     :ivar origin: The first station of the first route.
     :ivar destination: The last station of the last route.
+    :ivar arrival: The arrival time at the last station of the last route.
+    :ivar duration: The total time the itinerary takes.
+    :ivar distance: The total distance of the itinerary. Measured in kilometers.
+    :ivar warnings: A dict of warnings of each route in this itinerary.
     """
 
-    def __init__(self, routes: list["Route"]):
-        self.routes: list["Route"] = routes or []
+    def __init__(self, routes: list[Route]):
+        self.routes: list[Route] = routes or []
         # self.departure: datetime | None = departure
         # self.arrival: datetime | None = arrival
         # self.length: timedelta = self.arrival - self.departure
@@ -59,6 +59,10 @@ class Itinerary(object):
         return self.arrival - self.departure
 
     @property
+    def duration(self) -> timedelta:
+        return self.length #todo deprecate length??
+
+    @property
     def warnings(self) -> dict[str, list[str]] | None:
         warns = {}
         for rt in self.routes:
@@ -87,7 +91,6 @@ class Itinerary(object):
         return hash((tuple(self.routes), self.departure, self.arrival))
 
     def pprint(self):
-    # Transpose the data
         transposed_data = list(map(list, zip_longest(*[[str(st) for st in route.stations] for route in self.routes], fillvalue="")))
         print(tabulate.tabulate(transposed_data, headers=[f"{route.traintype}; delay: {route.delay}min; distance: {route.distance}km" for route in self.routes], tablefmt="fancy_grid"))
         print(f"{self.warnings=}")

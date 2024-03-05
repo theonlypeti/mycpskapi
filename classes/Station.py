@@ -18,7 +18,10 @@ class Station(object):
         return f"{self.__class__}({self.name},{self.arrival},{self.departure})"
 
     def __str__(self):
-        return f"Station:\n{self.name=}\n{self.arrival=}\n{self.departure=}"
+        return f"| {self.name}\n| Arrival: {self.arrival}\nV Departure: {self.departure} "
+
+    def pprint(self):
+        print(f"{self.name}\nArrival: {self.arrival}\nDeparture: {self.departure}")
 
     def __eq__(self, other):
         if isinstance(other, Station):

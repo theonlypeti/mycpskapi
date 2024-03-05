@@ -22,7 +22,7 @@ train types, duration, distances, remarks, warnings and rolling stock specs.
 ## Installation
 
 1. Clone the repository to your local machine.
-2. Navigate to the project directory (assuming in a venv).
+2. Navigate to the project directory using cd (or just open cmd in there).
 3. Install the required packages using pip:
    ```
    pip install -r requirements.txt
@@ -33,7 +33,7 @@ train types, duration, distances, remarks, warnings and rolling stock specs.
 You can run the program with command-line arguments. Here's an example:
 
 ```bash
-python main.py --depart "Bratislava" --to "Podhajska" --date 13.01.2024 --time 12:00 --autocorrect
+python main.py --depart "Bratislava" --to "Podhajska" --date 13.05.2024 --time 12:00 --autocorrect
 ```
 
 ## Command-line Arguments

@@ -40,8 +40,6 @@ class TestMain(unittest.TestCase):
         self.assertIn("Wien Hbf", stations)
 
     def test_itin_duration(self):
-        print(itin_podh_ba.length)
-        print(itin_podh_ba.pprint())
         self.assertTrue(timedelta(hours=2) > itin_podh_ba.length > timedelta(hours=1))
         self.assertTrue(itin_podh_ba.length < itin_pozb_ba.length)
 

@@ -5,9 +5,9 @@ class RouteSpecs:
         Each attribute of the RouteSpecs class corresponds to a specific feature that a route's rolling stock can have, such as internet access, power sockets, and whether it has a sleeper or couchette cars.
     """
     def __init__(self, strings: list[str]):
-        # chars = '³W1z.[LºªV2©wR¯íM®rH½'
+        # chars = '³W1z.[LºªV2©wR¯íM®rH½°²'
         self._unknowns = []
-        for char in strings:  # TODO should i do case match? that would severely limit the requirements to 3.10+
+        for char in strings:  # TODO should i do case match? that would severely limit the requirements to 3.10+, or just a dict lookup
             # if char not in chars:
             #     pass
             if char == "R":
@@ -28,6 +28,8 @@ class RouteSpecs:
                 self.bicycle_forbidden = True
             elif char == "ª":
                 self.bicycle_paid = True
+            elif char == "²":
+                self.bicycle_optional_reservation = True
             elif char == "L":
                 self.bicycle = True
             elif char == "©":
@@ -52,7 +54,8 @@ class RouteSpecs:
                 self.quiet_zone = True
             elif char == "kino":
                 self.children_cinema = True
-
+            elif char == "°":
+                self.baggage_storage = True  # with optional reservation
             else:
                 self._unknowns.append(char)
         if self._unknowns:

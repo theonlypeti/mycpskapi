@@ -1,3 +1,7 @@
+from itertools import zip_longest
+
+import tabulate
+
 from classes import Station
 from classes.RouteSpecs import RouteSpecs
 
@@ -17,8 +21,9 @@ class Route(object):
     :ivar warnings: A list of warnings of the current route.
     :ivar remarks: A list of informative remarks of the route.
     :ivar specs: A RouteSpecs object that holds all the attributes and info about the route's train.
+    :ivar company: The company that operates the train.
     """
-    def __init__(self, cities: list[Station], meska: int, traintype: str | None, distance: int = None, warnings=None, remarks=None, specs=None):
+    def __init__(self, cities: list[Station], meska: int, traintype: str | None, distance: int = None, warnings=None, remarks=None, specs=None, company=None):
         # self.departure: datetime = departure
         # self.arrival: datetime = arrival
         self.stations: list[Station] = cities
@@ -30,6 +35,7 @@ class Route(object):
         self.warnings: list[str] | None = warnings
         self.remarks: list[str] | None = remarks
         self.specs: RouteSpecs = specs
+        self.company = company
 
     @property
     def departure(self):
@@ -70,3 +76,10 @@ class Route(object):
 
     def __hash__(self):
         return hash((tuple(self.stations), self.departure, self.arrival, self.delay))
+
+    def pprint(self):
+        transposed_data = list(
+            map(list, zip_longest(*[[f"{st}" for st in self.stations]], fillvalue="")))
+        print(tabulate.tabulate(transposed_data, headers=[f"{self.traintype}; delay: {self.delay}min; distance: {self.distance}km"], tablefmt="fancy_grid"))
+        print(f"{self.warnings=}")
+

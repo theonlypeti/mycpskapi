@@ -8,7 +8,6 @@ import requests
 import time as time_module
 from classes.RouteSpecs import RouteSpecs
 start = time_module.perf_counter()
-
 # root = os.getcwd()
 root = (os.path.dirname(os.path.abspath(__file__)))
 import utils.mylogger as mylogger
@@ -18,7 +17,7 @@ from classes.Itinerary import Itinerary
 from utils.levenstein import recommend_words
 # os.chdir(root)
 
-VERSION = "0.9b"
+VERSION = "0.10b"
 
 
 def cmd_args():
@@ -56,29 +55,29 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
         currdate = depart_time
 
         spoj = soup.find("div", attrs={"class": "connection-details"})
-        allcities = spoj.find_all("a", attrs={"title": "Zobraziť detail spoja"})
-        traintype = spoj.find("img").get("alt")
-        logger.debug(allcities)
+        alltrains = spoj.find_all("a", attrs={"title": "Zobraziť detail spoja"})
+        logger.debug(alltrains)
     except AttributeError as e:
         logger.error(e)
         logger.warning(link)
         raise e.__class__("No data found. Double check the provided station names and try again.")
-    try:
-        links = []
-        for vlak in allcities:
-            links.append(vlak.get("href"))
-        # links = a.get("href") #ez szokott errorozni mert nonetype az a
-    except AttributeError as e:
-        logger.error(e)  # raise invalid data
-        raise e.__class__("No data found. Double check the provided station names and try again.")
 
     routes = []
-    for link in links:
-        with requests.get(link) as req:
-            stranka = req.text
+    for train in alltrains:
+        link = train.get("href")
 
-        delay = soup.find("a", attrs={"class": "delay-bubble"})
-        if delay and delay.contents[0].text.startswith("Aktuálne"):
+        icon = train.find("img")
+        if icon:
+            traintype = icon.get("alt", None)
+        else:
+            traintype = train.find("h3").get("title", "Unknown train type")
+            traintype = traintype.split("(")[0].strip()
+
+        company = train.find("span", attrs={"class": "owner"}).text.strip()
+
+        delay = train.find_next("a", attrs={"class": "delay-bubble"})
+        logger.info(delay)
+        if delay and delay.contents[0].text.startswith("Aktuálne"):  # TODO regex?
             dly = delay.contents[0].text.split(" ")[2].strip()
             if dly == "meškania":
                 delay = 0
@@ -91,14 +90,17 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
         else:
             delay = 0
 
-        soup = html(stranka, 'html.parser')
+        with requests.get(link) as req:
+            podstranka = req.text
+
+        soup = html(podstranka, 'html.parser')
         specs = soup.find("p", attrs={"class": "specs"})
         # logger.warning(specs.text)
         citylist = soup.find("ul", attrs={"class": "line-itinerary"})
-        allcities = citylist.find_all("li", attrs={"class": "item"})
+        alltrains = citylist.find_all("li", attrs={"class": "item"})
         othercities = soup.find_all("li", attrs={"class": "item inactive"})
-        routecities = set(allcities).difference(set(othercities))
-        routecities = [i for i in allcities if i in routecities]
+        routecities = set(alltrains).difference(set(othercities))
+        routecities = [i for i in alltrains if i in routecities]
 
         try:
             distance = int(routecities[-1].find("span", attrs={"class": "distance"}).text.strip("km ")) - int(routecities[0].find("span", attrs={"class": "distance"}).text.strip("km "))
@@ -114,7 +116,6 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
                 city.arrival += timedelta(days=1)
                 city.departure += timedelta(days=1)
             if city.departure:
-                logger.debug(f"{city.departure=}")
                 currdate = city.departure
 
         warn = soup.find("li", attrs={"class": "message-red"})
@@ -130,7 +131,7 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
             remarks = None
 
         specs = RouteSpecs([elem.text for elem in specs.find_all("span")])
-        rt = Route(cities, delay, traintype or None, distance, warnings, remarks, specs)
+        rt = Route(cities, delay, traintype or None, distance, warnings, remarks, specs, company)
         routes.append(rt)
 
     return Itinerary(routes)
@@ -177,6 +178,10 @@ def main():
     cesta = make_request(link, inputted_datetime)
     # print(cesta)
     cesta.pprint()
+    # for rt in cesta.routes:
+    #     print(rt.company)
+    #     rt.pprint()
+    #     rt.destination.pprint()
     if args.logfile:
         logger.message(f"{cesta}")
     # print(cesta.warnings)
