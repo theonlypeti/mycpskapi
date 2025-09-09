@@ -2,11 +2,11 @@ import unittest
 from datetime import datetime, timedelta
 from classes.RouteSpecs import RouteSpecs
 from main import get_itinerary, find_stations, autocomplete_stations
-
-itin_podh_ba = get_itinerary("Podhájska", "Bratislava hl.st.", datetime(2024, 1, 1, 17, 0))
-itin_ba_wien = get_itinerary("Bratislava hl.st.", "Wien Hbf", datetime(2024, 1, 14, 6, 0))
-itin_pozb_ba = get_itinerary("Pozba", "Bratislava hl.st.", datetime(2024, 1, 1, 17, 0))
-
+year = datetime.now().year
+itin_podh_ba = get_itinerary("Podhájska", "Bratislava hl.st.", datetime(year, 1, 1, 17, 0))
+itin_ba_wien = get_itinerary("Bratislava hl.st.", "Wien Hbf", datetime(year, 1, 14, 6, 0))
+itin_pozb_ba = get_itinerary("Pozba", "Bratislava hl.st.", datetime(year, 1, 1, 17, 0))
+itin_podh_ba.pprint()
 
 class TestMain(unittest.TestCase):
 
@@ -40,6 +40,7 @@ class TestMain(unittest.TestCase):
         self.assertIn("Wien Hbf", stations)
 
     def test_itin_duration(self):
+        print(itin_podh_ba.length)
         self.assertTrue(timedelta(hours=2) > itin_podh_ba.length > timedelta(hours=1))
         self.assertTrue(itin_podh_ba.length < itin_pozb_ba.length)
 
@@ -54,12 +55,12 @@ class TestDunderMethods(unittest.TestCase):
 
     def test_itinerary_eq_returns_true_for_same_routes(self):
         itinerary1 = itin_pozb_ba
-        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime(2024, 1, 1, 17, 1))
+        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime(year, 1, 1, 17, 1))
         self.assertTrue(itinerary1 == itinerary2)
 
     def test_itinerary_eq_returns_false_for_different_routes(self):
         itinerary1 = itin_pozb_ba
-        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime(2024, 1, 2, 17, 0))
+        itinerary2 = get_itinerary("Pozba", "Bratislava hl.st.", datetime(year, 1, 2, 17, 0))
         self.assertFalse(itinerary1 == itinerary2)
 
 

@@ -33,7 +33,7 @@ train types, duration, distances, remarks, warnings and rolling stock specs.
 You can run the program with command-line arguments. Here's an example:
 
 ```bash
-python main.py --depart "Bratislava" --to "Podhajska" --date 13.05.2024 --time 12:00 --autocorrect
+python main.py --depart "Bratislava" --to "Podhajska" --date 13.05.2025 --time 12:00 --autocorrect
 ```
 
 ## Command-line Arguments

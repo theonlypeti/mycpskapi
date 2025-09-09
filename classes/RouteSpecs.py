@@ -14,8 +14,12 @@ class RouteSpecs:
                 self.seat_reservation_possible = True
             elif char == "r":
                 self.seat_reservation_required = True
+            elif char == "µ":
+                self.self_service_ticket_machine = True
             elif char == "M":
                 self.restaurant = True
+            elif char == "Q":
+                self.snack_bar = True
             elif char == "º":
                 self.internet = True
             elif char == "³":
@@ -25,7 +29,7 @@ class RouteSpecs:
             elif char == "¯":
                 self.luggage_paid = True
             elif char == "í":
-                self.bicycle_forbidden = True
+                self.bicycle_as_luggage_forbidden = True # bicycles as registered luggage are not allowed
             elif char == "ª":
                 self.bicycle_paid = True
             elif char == "²":
@@ -44,6 +48,8 @@ class RouteSpecs:
                 self.second_class_only = True
             elif char == "V":
                 self.sleeper = True
+            elif char == "v":
+                self.no_waiting_for_connections = True
             elif char == "W":
                 self.couchette = True
             elif char == "[":
@@ -52,6 +58,8 @@ class RouteSpecs:
                 self.direct_carriage = True  # priamy vozeň, honestly idk
             elif char == "½":
                 self.quiet_zone = True
+            elif char == "¾":
+                self.onboard_portal = True # not sure what this is
             elif char == "kino":
                 self.children_cinema = True
             elif char == "°":

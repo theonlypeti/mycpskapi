@@ -76,7 +76,7 @@ def make_request(link: str, inputted_datetime: datetime) -> Itinerary:  # dont j
         company = train.find("span", attrs={"class": "owner"}).text.strip()
 
         delay = train.find_next("a", attrs={"class": "delay-bubble"})
-        logger.info(delay)
+        logger.debug(delay)
         if delay and delay.contents[0].text.startswith("Aktuálne"):  # TODO regex?
             dly = delay.contents[0].text.split(" ")[2].strip()
             if dly == "meškania":
